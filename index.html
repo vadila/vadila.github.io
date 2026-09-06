@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ID &amp; Bank Account Generators — ES / MX / PL / RO / CO</title>
+  <meta name="description" content="Generate structurally valid test national ID numbers, tax numbers and bank accounts (DNI, CURP, PESEL, NIP, dowód osobisty, CNP, cédula, IBAN, CLABE) for Spain, Mexico, Poland, Romania and Colombia.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪪</text></svg>">
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body>
+  <header class="page-head">
+    <h1>ID &amp; Bank Account Generators</h1>
+    <p class="sub">Synthetic, structurally valid national IDs, tax numbers and bank accounts for testing. Not real people's data.</p>
+  </header>
+
+  <!-- Country tabs. `data-country` links a tab to its panel; app.js only toggles them. -->
+  <nav class="tabs" role="tablist" aria-label="Country">
+    <button class="tab" role="tab" id="tab-ES" data-country="ES" aria-controls="panel-ES" aria-selected="true" tabindex="0">
+      🇪🇸 Spain <span class="code">DNI / NIE · IBAN</span>
+    </button>
+    <button class="tab" role="tab" id="tab-MX" data-country="MX" aria-controls="panel-MX" aria-selected="false" tabindex="-1">
+      🇲🇽 Mexico <span class="code">CURP · CLABE</span>
+    </button>
+    <button class="tab" role="tab" id="tab-PL" data-country="PL" aria-controls="panel-PL" aria-selected="false" tabindex="-1">
+      🇵🇱 Poland <span class="code">PESEL · NIP · Dowód · IBAN</span>
+    </button>
+    <button class="tab" role="tab" id="tab-RO" data-country="RO" aria-controls="panel-RO" aria-selected="false" tabindex="-1">
+      🇷🇴 Romania <span class="code">CNP · IBAN</span>
+    </button>
+    <button class="tab" role="tab" id="tab-CO" data-country="CO" aria-controls="panel-CO" aria-selected="false" tabindex="-1">
+      🇨🇴 Colombia <span class="code">Cédula / NIT · Cuenta</span>
+    </button>
+  </nav>
+
+  <main id="panels">
+
+    <!-- ============================================================ Spain -->
+    <section class="panel" id="panel-ES" role="tabpanel" aria-labelledby="tab-ES" data-country="ES">
+      <div class="switcher" role="tablist" aria-label="Spain document type">
+        <button class="sw" role="tab" data-doc="id" data-aliases="dni nie" aria-controls="doc-ES-id" aria-selected="true">DNI / NIE</button>
+        <button class="sw" role="tab" data-doc="bank" data-aliases="iban ccc" aria-controls="doc-ES-bank" aria-selected="false">IBAN</button>
+      </div>
+
+      <div class="doc" id="doc-ES-id" data-doc="id">
+        <div class="card">
+          <h2>Spain — DNI / NIE</h2>
+          <p class="hint">Every value passes the official format and checksum rules.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="ES-id-kind">Document type</label>
+              <select id="ES-id-kind" data-field="kind">
+                <option value="random">Random (DNI or NIE)</option>
+                <option value="dni">DNI — Spanish national</option>
+                <option value="nie">NIE — foreign resident</option>
+              </select>
+            </div>
+            <div class="field" data-show-if="kind=nie">
+              <label for="ES-id-niePrefix">NIE prefix</label>
+              <select id="ES-id-niePrefix" data-field="niePrefix">
+                <option value="random">Random (X / Y / Z)</option>
+                <option value="X">X — issued before 2008</option>
+                <option value="Y">Y — issued 2008–2016</option>
+                <option value="Z">Z — issued after Y series</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ES-id-formatted">Separator</label>
+              <select id="ES-id-formatted" data-field="formatted">
+                <option value="plain">None — 12345678Z</option>
+                <option value="dash">Dash — 12345678-Z</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ES-id-count">How many</label>
+              <select id="ES-id-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate DNI / NIE</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a DNI / NIE to check" aria-label="DNI / NIE to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>DNI</dt><dd>8 digits + control letter</dd>
+            <dt>NIE</dt><dd>X/Y/Z + 7 digits + control letter (prefix maps to 0/1/2)</dd>
+            <dt>Letter</dt><dd>TRWAGMYFPDXBNJZSQVHLCKE indexed by number mod 23</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-ES-bank" data-doc="bank" hidden>
+        <div class="card">
+          <h2>Spain — IBAN / CCC</h2>
+          <p class="hint">Includes the two national CCC control digits plus the mod-97 IBAN check.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="ES-bank-bank">Bank (entidad)</label>
+              <select id="ES-bank-bank" data-field="bank" data-options="banks"></select>
+            </div>
+            <div class="field">
+              <label for="ES-bank-format">Formatting</label>
+              <select id="ES-bank-format" data-field="format">
+                <option value="plain">Plain — ES9121000418…</option>
+                <option value="grouped">Grouped — ES91 2100 0418 45…</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ES-bank-count">How many</label>
+              <select id="ES-bank-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate IBAN</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste an IBAN to check" aria-label="IBAN to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>ES kk</dt><dd>Country code + mod-97 IBAN check digits</dd>
+            <dt>EEEE</dt><dd>Entidad — 4-digit bank code</dd>
+            <dt>OOOO</dt><dd>Oficina — 4-digit branch code</dd>
+            <dt>DD</dt><dd>Two CCC control digits: one over 00+entidad+oficina, one over the account, weights 1,2,4,8,5,10,9,7,3,6 mod 11</dd>
+            <dt>C×10</dt><dd>10-digit account number</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================== Mexico -->
+    <section class="panel" id="panel-MX" role="tabpanel" aria-labelledby="tab-MX" data-country="MX" hidden>
+      <div class="switcher" role="tablist" aria-label="Mexico document type">
+        <button class="sw" role="tab" data-doc="id" data-aliases="curp" aria-controls="doc-MX-id" aria-selected="true">CURP</button>
+        <button class="sw" role="tab" data-doc="bank" data-aliases="clabe iban" aria-controls="doc-MX-bank" aria-selected="false">CLABE</button>
+      </div>
+
+      <div class="doc" id="doc-MX-id" data-doc="id">
+        <div class="card">
+          <h2>Mexico — CURP</h2>
+          <p class="hint">Every value passes the official format and checksum rules.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="MX-id-sex">Sex</label>
+              <select id="MX-id-sex" data-field="sex">
+                <option value="random">Random</option>
+                <option value="H">H — hombre</option>
+                <option value="M">M — mujer</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="MX-id-state">State of birth</label>
+              <select id="MX-id-state" data-field="state" data-options="states"></select>
+            </div>
+            <div class="field">
+              <label for="MX-id-birth">Birth date (blank = random)</label>
+              <input type="date" id="MX-id-birth" data-field="birth">
+            </div>
+            <div class="field">
+              <label for="MX-id-nameMode">Name</label>
+              <select id="MX-id-nameMode" data-field="nameMode">
+                <option value="random">Random Mexican name</option>
+                <option value="manual">Enter manually</option>
+              </select>
+            </div>
+            <div class="field" data-show-if="nameMode=manual">
+              <label for="MX-id-paternal">First surname (paterno)</label>
+              <input type="text" id="MX-id-paternal" data-field="paternal" placeholder="HERNANDEZ">
+            </div>
+            <div class="field" data-show-if="nameMode=manual">
+              <label for="MX-id-maternal">Second surname (materno)</label>
+              <input type="text" id="MX-id-maternal" data-field="maternal" placeholder="GARCIA">
+            </div>
+            <div class="field" data-show-if="nameMode=manual">
+              <label for="MX-id-given">Given name(s)</label>
+              <input type="text" id="MX-id-given" data-field="given" placeholder="JUAN CARLOS">
+            </div>
+            <div class="field">
+              <label for="MX-id-count">How many</label>
+              <select id="MX-id-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate CURP</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a CURP to check" aria-label="CURP to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>1–4</dt><dd>Initial + inner vowel of 1st surname, initial of 2nd surname, initial of given name</dd>
+            <dt>5–10</dt><dd>Birth date YYMMDD</dd>
+            <dt>11</dt><dd>Sex — H / M</dd>
+            <dt>12–13</dt><dd>State of birth (NE if born abroad)</dd>
+            <dt>14–16</dt><dd>First inner consonant of each of the three name parts</dd>
+            <dt>17</dt><dd>Homoclave — digit if born before 2000, letter from 2000</dd>
+            <dt>18</dt><dd>Check digit (mod 10 over positions 1–17)</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-MX-bank" data-doc="bank" hidden>
+        <div class="card">
+          <h2>Mexico — CLABE</h2>
+          <p class="hint">Mexico does not use IBAN. The CLABE is 18 digits with a weighted mod-10 check digit.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="MX-bank-bank">Bank</label>
+              <select id="MX-bank-bank" data-field="bank" data-options="banks"></select>
+            </div>
+            <div class="field">
+              <label for="MX-bank-plaza">Plaza (branch city code) (blank = random)</label>
+              <input type="text" id="MX-bank-plaza" data-field="plaza" placeholder="180">
+            </div>
+            <div class="field">
+              <label for="MX-bank-format">Formatting</label>
+              <select id="MX-bank-format" data-field="format">
+                <option value="plain">Plain — 18 digits</option>
+                <option value="grouped">Grouped — 012 180 01234567890 1</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="MX-bank-count">How many</label>
+              <select id="MX-bank-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate CLABE</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a CLABE to check" aria-label="CLABE to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>1–3</dt><dd>Bank code (catálogo de bancos)</dd>
+            <dt>4–6</dt><dd>Plaza — branch city code</dd>
+            <dt>7–17</dt><dd>11-digit account number</dd>
+            <dt>18</dt><dd>Check digit: each digit × weight 3,7,1 (repeating) taken mod 10, summed, then 10 − (sum mod 10)</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================== Poland -->
+    <section class="panel" id="panel-PL" role="tabpanel" aria-labelledby="tab-PL" data-country="PL" hidden>
+      <div class="switcher" role="tablist" aria-label="Poland document type">
+        <button class="sw" role="tab" data-doc="id" data-aliases="pesel" aria-controls="doc-PL-id" aria-selected="true">PESEL</button>
+        <button class="sw" role="tab" data-doc="nip" data-aliases="vat" aria-controls="doc-PL-nip" aria-selected="false">NIP</button>
+        <button class="sw" role="tab" data-doc="dowod" data-aliases="dowód idcard dowodosobisty" aria-controls="doc-PL-dowod" aria-selected="false">Dowód osobisty</button>
+        <button class="sw" role="tab" data-doc="bank" data-aliases="iban nrb" aria-controls="doc-PL-bank" aria-selected="false">IBAN</button>
+      </div>
+
+      <div class="doc" id="doc-PL-id" data-doc="id">
+        <div class="card">
+          <h2>Poland — PESEL</h2>
+          <p class="hint">Every value passes the official format and checksum rules.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="PL-id-sex">Sex</label>
+              <select id="PL-id-sex" data-field="sex">
+                <option value="random">Random</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="PL-id-birth">Birth date (blank = random)</label>
+              <input type="date" id="PL-id-birth" data-field="birth">
+            </div>
+            <div class="field">
+              <label for="PL-id-count">How many</label>
+              <select id="PL-id-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate PESEL</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a PESEL to check" aria-label="PESEL to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>1–6</dt><dd>Birth date YYMMDD, month offset by century (+20 for 2000s, +80 for 1800s)</dd>
+            <dt>7–10</dt><dd>Ordinal serial; the 10th digit is odd for males, even for females</dd>
+            <dt>11</dt><dd>Check digit — weights 1,3,7,9 repeating, mod 10</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-PL-nip" data-doc="nip" hidden>
+        <div class="card">
+          <h2>Poland — NIP (tax identification number)</h2>
+          <p class="hint">10 digits. The last one is a mod-11 check digit; combinations that would need a check digit of 10 are simply not issued.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="PL-nip-office">Tax office prefix</label>
+              <select id="PL-nip-office" data-field="office" data-options="offices"></select>
+            </div>
+            <div class="field">
+              <label for="PL-nip-format">Formatting</label>
+              <select id="PL-nip-format" data-field="format">
+                <option value="plain">Plain — 5250007738</option>
+                <option value="dashes">Dashed — 525-000-77-38</option>
+                <option value="dashesOld">Dashed (personal) — 525-00-07-738</option>
+                <option value="vat">EU VAT — PL5250007738</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="PL-nip-count">How many</label>
+              <select id="PL-nip-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate NIP</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a NIP to check" aria-label="NIP to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>1–3</dt><dd>Code of the issuing tax office (urząd skarbowy) — historical, no arithmetic role</dd>
+            <dt>4–9</dt><dd>Sequential number</dd>
+            <dt>10</dt><dd>Check digit — weights 6,5,7,2,3,4,5,6,7 over digits 1–9, sum mod 11</dd>
+            <dt>mod 11 = 10</dt><dd>Never issued — the body is skipped rather than written with a two-digit check</dd>
+            <dt>PL prefix</dt><dd>The same ten digits prefixed with "PL" form the EU VAT number</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-PL-dowod" data-doc="dowod" hidden>
+        <div class="card">
+          <h2>Poland — numer dowodu osobistego</h2>
+          <p class="hint">Three series letters plus six digits, e.g. ABA 300000. The first digit is a check digit over the whole number.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="PL-dowod-series">Series letters (blank = random)</label>
+              <input type="text" id="PL-dowod-series" data-field="series" placeholder="ABA">
+            </div>
+            <div class="field">
+              <label for="PL-dowod-format">Formatting</label>
+              <select id="PL-dowod-format" data-field="format">
+                <option value="plain">Plain — ABA300000</option>
+                <option value="spaced">Spaced — ABA 300000</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="PL-dowod-count">How many</label>
+              <select id="PL-dowod-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate Dowód osobisty</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a Dowód osobisty to check" aria-label="Dowód osobisty to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>1–3</dt><dd>Series — three letters, valued A=10 … Z=35</dd>
+            <dt>4</dt><dd>Check digit</dd>
+            <dt>5–9</dt><dd>Serial number</dd>
+            <dt>Rule</dt><dd>Weights 7,3,1,9,7,3,1,7,3 across all nine characters; the weighted sum must be a multiple of 10</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-PL-bank" data-doc="bank" hidden>
+        <div class="card">
+          <h2>Poland — IBAN / NRB</h2>
+          <p class="hint">The 8-digit sort code carries its own check digit on top of the mod-97 IBAN check.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="PL-bank-bank">Bank</label>
+              <select id="PL-bank-bank" data-field="bank" data-options="banks"></select>
+            </div>
+            <div class="field">
+              <label for="PL-bank-format">Formatting</label>
+              <select id="PL-bank-format" data-field="format">
+                <option value="plain">Plain — PL61109010140…</option>
+                <option value="grouped">Grouped — PL61 1090 1014 …</option>
+                <option value="nrb">NRB only — 26 digits, no PL prefix</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="PL-bank-count">How many</label>
+              <select id="PL-bank-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate IBAN</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste an IBAN to check" aria-label="IBAN to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>PL kk</dt><dd>Country code + mod-97 IBAN check digits</dd>
+            <dt>BBBBBBBB</dt><dd>Numer rozliczeniowy — 8-digit sort code, last digit a check digit (weights 3,9,7,1,3,9,7 mod 10)</dd>
+            <dt>A×16</dt><dd>16-digit account number</dd>
+            <dt>NRB</dt><dd>Domestic form = the 26 digits after "PL"</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================== Romania -->
+    <section class="panel" id="panel-RO" role="tabpanel" aria-labelledby="tab-RO" data-country="RO" hidden>
+      <div class="switcher" role="tablist" aria-label="Romania document type">
+        <button class="sw" role="tab" data-doc="id" data-aliases="cnp" aria-controls="doc-RO-id" aria-selected="true">CNP</button>
+        <button class="sw" role="tab" data-doc="bank" data-aliases="iban" aria-controls="doc-RO-bank" aria-selected="false">IBAN</button>
+      </div>
+
+      <div class="doc" id="doc-RO-id" data-doc="id">
+        <div class="card">
+          <h2>Romania — CNP</h2>
+          <p class="hint">Every value passes the official format and checksum rules.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="RO-id-sex">Sex</label>
+              <select id="RO-id-sex" data-field="sex">
+                <option value="random">Random</option>
+                <option value="M">Male</option>
+                <option value="F">Female</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="RO-id-status">Person type</label>
+              <select id="RO-id-status" data-field="status">
+                <option value="citizen">Romanian citizen (1–6)</option>
+                <option value="foreign">Resident foreigner (7–8)</option>
+                <option value="unknown">Foreign national (9)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="RO-id-county">County (județ)</label>
+              <select id="RO-id-county" data-field="county" data-options="counties"></select>
+            </div>
+            <div class="field">
+              <label for="RO-id-birth">Birth date (blank = random)</label>
+              <input type="date" id="RO-id-birth" data-field="birth">
+            </div>
+            <div class="field">
+              <label for="RO-id-count">How many</label>
+              <select id="RO-id-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate CNP</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a CNP to check" aria-label="CNP to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>1</dt><dd>Sex + century: 1/2 = 1900s, 3/4 = 1800s, 5/6 = 2000s, 7/8 = resident foreigner, 9 = foreign national</dd>
+            <dt>2–7</dt><dd>Birth date YYMMDD</dd>
+            <dt>8–9</dt><dd>County of registration</dd>
+            <dt>10–12</dt><dd>Sequential number 001–999</dd>
+            <dt>13</dt><dd>Check digit — weights 279146358279, mod 11 (10 → 1)</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-RO-bank" data-doc="bank" hidden>
+        <div class="card">
+          <h2>Romania — IBAN</h2>
+          <p class="hint">Romania has no national check digit — the mod-97 IBAN check is the only checksum.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="RO-bank-bank">Bank</label>
+              <select id="RO-bank-bank" data-field="bank" data-options="banks"></select>
+            </div>
+            <div class="field">
+              <label for="RO-bank-format">Formatting</label>
+              <select id="RO-bank-format" data-field="format">
+                <option value="plain">Plain — RO49AAAA1B31…</option>
+                <option value="grouped">Grouped — RO49 AAAA 1B31 …</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="RO-bank-count">How many</label>
+              <select id="RO-bank-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate IBAN</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste an IBAN to check" aria-label="IBAN to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>RO kk</dt><dd>Country code + mod-97 IBAN check digits</dd>
+            <dt>BBBB</dt><dd>4-letter bank code, taken from the bank's BIC</dd>
+            <dt>A×16</dt><dd>16 alphanumeric characters assigned by the bank (digits in practice)</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================= Colombia -->
+    <section class="panel" id="panel-CO" role="tabpanel" aria-labelledby="tab-CO" data-country="CO" hidden>
+      <div class="switcher" role="tablist" aria-label="Colombia document type">
+        <button class="sw" role="tab" data-doc="id" data-aliases="cedula cédula nit" aria-controls="doc-CO-id" aria-selected="true">Cédula / NIT</button>
+        <button class="sw" role="tab" data-doc="bank" data-aliases="cuenta iban" aria-controls="doc-CO-bank" aria-selected="false">Cuenta</button>
+      </div>
+
+      <div class="doc" id="doc-CO-id" data-doc="id">
+        <div class="card">
+          <h2>Colombia — Cédula / NIT</h2>
+          <p class="hint">Every value passes the official format and checksum rules.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="CO-id-kind">Document type</label>
+              <select id="CO-id-kind" data-field="kind">
+                <option value="cc">Cédula de Ciudadanía (CC)</option>
+                <option value="ti">Tarjeta de Identidad (TI) — minor</option>
+                <option value="ce">Cédula de Extranjería (CE)</option>
+                <option value="nit">NIT — company / taxpayer</option>
+              </select>
+            </div>
+            <div class="field" data-show-if="kind=cc">
+              <label for="CO-id-era">Series</label>
+              <select id="CO-id-era" data-field="era">
+                <option value="random">Random</option>
+                <option value="old_m">Legacy male series (1M–19M)</option>
+                <option value="old_f">Legacy female series (20M–69M)</option>
+                <option value="nuip">NUIP — born from ~1998 (1,0xx,xxx,xxx)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="CO-id-formatted">Formatting</label>
+              <select id="CO-id-formatted" data-field="formatted">
+                <option value="plain">Plain — 1023456789</option>
+                <option value="dots">Grouped — 1.023.456.789</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="CO-id-count">How many</label>
+              <select id="CO-id-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate Cédula / NIT</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a Cédula / NIT to check" aria-label="Cédula / NIT to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>Cédula</dt><dd>Sequential, no check digit — only length and series can be verified</dd>
+            <dt>Legacy</dt><dd>Roughly 1M–19M male, 20M–69M female (issued before the NUIP scheme)</dd>
+            <dt>NUIP</dt><dd>10 digits starting with 1, for people registered from ~1998</dd>
+            <dt>NIT</dt><dd>Base number + "-" + verification digit (weights 3,7,13,17,19,23,29,37,41,43,47,53,59,67,71, mod 11)</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-CO-bank" data-doc="bank" hidden>
+        <div class="card">
+          <h2>Colombia — Cuenta bancaria</h2>
+          <p class="hint">Colombia does not use IBAN, and account numbers carry no published checksum — only realistic bank codes and lengths are produced.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="CO-bank-bank">Bank</label>
+              <select id="CO-bank-bank" data-field="bank" data-options="banks"></select>
+            </div>
+            <div class="field">
+              <label for="CO-bank-type">Account type</label>
+              <select id="CO-bank-type" data-field="type">
+                <option value="random">Random</option>
+                <option value="ahorros">Ahorros (savings)</option>
+                <option value="corriente">Corriente (checking)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="CO-bank-format">Output</label>
+              <select id="CO-bank-format" data-field="format">
+                <option value="account">Account number only</option>
+                <option value="withBank">Bank code + account number</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="CO-bank-count">How many</label>
+              <select id="CO-bank-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate Cuenta</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a Cuenta to check" aria-label="Cuenta to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>No IBAN</dt><dd>Colombia is not in the IBAN registry; transfers use bank code + account number</dd>
+            <dt>Bank code</dt><dd>3 digits from the Superintendencia Financiera list</dd>
+            <dt>Account</dt><dd>Typically 9–11 digits, length set by each bank; no check digit exists</dd>
+            <dt>Wallets</dt><dd>Nequi (507) and Daviplata (551) accounts are the holder's 10-digit mobile number</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="page-foot">
+    <p>
+      Numbers are generated locally in your browser — nothing is sent anywhere.
+      They satisfy the published format and checksum rules of each country, but are
+      <strong>not</strong> issued to any person. Use for test data only.
+    </p>
+  </footer>
+
+  <script src="assets/core.js"></script>
+  <script src="assets/countries/es.js"></script>
+  <script src="assets/countries/mx.js"></script>
+  <script src="assets/countries/pl.js"></script>
+  <script src="assets/countries/ro.js"></script>
+  <script src="assets/countries/co.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>

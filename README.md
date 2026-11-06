@@ -10,6 +10,7 @@ copy-to-clipboard button and a validator.
 | 🇲🇽 MX | Mexico | CURP | — | CLABE (18 digits) |
 | 🇵🇱 PL | Poland | PESEL | NIP (tax number), numer dowodu osobistego | IBAN (28 chars) / NRB |
 | 🇷🇴 RO | Romania | CNP | — | IBAN (24 chars) |
+| 🇵🇹 PT | Portugal | N.º Documento de Identificação (Cartão de Cidadão) | NISS (Segurança Social) | IBAN (25 chars, incl. NIB control digits) |
 | 🇨🇴 CO | Colombia | Cédula CC / TI / CE, NIT | — | Cuenta bancaria (no IBAN — see below) |
 
 Each country tab has a switch across the documents it offers — for Poland that is
@@ -36,6 +37,7 @@ assets/countries/es.js           Spain — DNI / NIE, IBAN / CCC
 assets/countries/mx.js           Mexico — CURP, CLABE
 assets/countries/pl.js           Poland — PESEL, NIP, dowód osobisty, IBAN / NRB
 assets/countries/ro.js           Romania — CNP, IBAN
+assets/countries/pt.js           Portugal — Cartão de Cidadão, NISS, IBAN / NIB
 assets/countries/co.js           Colombia — cédula / NIT, cuenta bancaria
 assets/app.js                    UI wiring only — it builds no markup
 .nojekyll                        tells Pages to serve files as-is (skip Jekyll)
@@ -130,9 +132,9 @@ Pages can only serve the repo root or `/docs`. Two ways out:
 ### URL
 
 - Project site: `https://<org>.github.io/<repo>/`
-- Deep link to a country tab: append `#es`, `#mx`, `#pl`, `#ro`, `#co`
+- Deep link to a country tab: append `#es`, `#mx`, `#pl`, `#ro`, `#pt`, `#co`
 - Deep link straight to a sub-tab: append the document, e.g. `#pl-iban`, `#mx-clabe`,
-  `#pl-nip` (also `#pl-vat`), `#pl-dowod`
+  `#pl-nip` (also `#pl-vat`), `#pl-dowod`, `#pt-cc`, `#pt-niss`, `#pt-iban`
 
 For a custom domain, add a `CNAME` file containing the hostname and configure the DNS record
 under **Settings → Pages → Custom domain**.
@@ -148,23 +150,26 @@ under **Settings → Pages → Custom domain**.
 | **NIP** | 3-digit tax-office prefix + 6-digit serial + check digit; weights `6,5,7,2,3,4,5,6,7` over digits 1–9, `sum mod 11`. A body whose remainder is 10 has no writable check digit and is never issued — the generator draws again |
 | **Dowód osobisty** | 3 series letters (`A`=10 … `Z`=35) + 6 digits, the **first** digit being the check digit; weights `7,3,1,9,7,3,1,7,3` across all nine characters, valid when `sum mod 10 == 0` |
 | **CNP** | Sex/century digit, `YYMMDD`, county code, serial `001–999`, check digit with weights `279146358279` mod 11 (10 → 1) |
+| **Cartão de Cidadão** | 8-digit civil ID + its check digit (weights `9…2`, mod 11; 10 is printed as 0 and never generated) + 2-character version (`ZZ` on a first card) + final check digit: from the right, every other value (A=10 … Z=35) doubled, −9 if over 9, total ≡ 0 mod 10 |
+| **NISS** | 11 digits, first `1` (individual) or `2` (legal entity); check digit = `9 − (sum mod 10)` with weights `29,23,19,17,13,11,7,5,3,2` |
 | **NIT** | Base number + verification digit, weights `3,7,13,17,19,23,29,37,41,43,47,53,59,67,71` right-to-left, mod 11 |
 | **Cédula (CC/TI/CE)** | No checksum exists in the Colombian scheme — only realistic series ranges are produced |
-| **IBAN** (ES/PL/RO) | ISO 7064 mod-97-10: check digits = `98 − mod97(bban + country + "00")` |
+| **IBAN** (ES/PL/RO/PT) | ISO 7064 mod-97-10: check digits = `98 − mod97(bban + country + "00")` |
 | **ES CCC** | Two extra control digits — one over `00`+entidad+oficina, one over the account, weights `1,2,4,8,5,10,9,7,3,6` mod 11 |
+| **PT NIB** | 21 digits: banco(4) + balcão(4) + conta(11) + 2 control digits = `98 − mod97(first 19 digits + "00")`; this makes every PT IBAN's check digits `50` |
 | **PL NRB** | The 8-digit sort code carries its own check digit, weights `3,9,7,1,3,9,7` mod 10 |
 | **CLABE** | 18 digits: bank(3) + plaza(3) + account(11) + check digit — each digit × weight `3,7,1` taken mod 10, summed, then `10 − (sum mod 10)` |
 | **CO cuenta** | Bank code + account number; no check digit exists. Nequi/Daviplata accounts are the holder's mobile number |
 
 The check-digit implementations are verified against published reference numbers —
-`12345678Z`, `44051401359`, `HEGG560427MVZRRL04`, NITs `890903938-8` and `899999068-1`,
+`12345678Z`, `44051401359`, `HEGG560427MVZRRL04`, the Cartão de Cidadão example `00000000 0 ZZ4`, NITs `890903938-8` and `899999068-1`,
 the publicly listed NIPs `5250007738` (PKO BP), `5260250995` (Orange Polska) and
 `5261040828`, the dowód example `ABA300000`, the SWIFT registry IBAN examples
-`ES9121000418450200051332`, `PL61109010140000071219812874`, `RO49AAAA1B31007593840000`,
+`ES9121000418450200051332`, `PL61109010140000071219812874`, `RO49AAAA1B31007593840000`, `PT50000201231234567890154`,
 and CLABE `032180000118359719`.
 
 The validators reject a value that merely *looks* right: an ES IBAN with a correct mod-97
-checksum but wrong CCC control digits is flagged, as is a PL IBAN with a bad sort-code check
+checksum but wrong CCC control digits is flagged, as is a PT IBAN with wrong NIB control digits, a PL IBAN with a bad sort-code check
 digit and a NIP whose first nine digits could only ever take a check digit of 10.
 
 The NIP and dowód validators accept the formatted variants too — `525-000-77-38`,

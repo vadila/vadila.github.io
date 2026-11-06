@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ID &amp; Bank Account Generators — ES / MX / PL / RO / CO</title>
-  <meta name="description" content="Generate structurally valid test national ID numbers, tax numbers and bank accounts (DNI, CURP, PESEL, NIP, dowód osobisty, CNP, cédula, IBAN, CLABE) for Spain, Mexico, Poland, Romania and Colombia.">
+  <title>ID &amp; Bank Account Generators — ES / MX / PL / RO / PT / CO</title>
+  <meta name="description" content="Generate structurally valid test national ID numbers, tax numbers and bank accounts (DNI, CURP, PESEL, NIP, dowód osobisty, CNP, Cartão de Cidadão, NISS, NIB, cédula, IBAN, CLABE) for Spain, Mexico, Poland, Romania, Portugal and Colombia.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🪪</text></svg>">
   <link rel="stylesheet" href="assets/styles.css">
 </head>
@@ -27,6 +27,9 @@
     </button>
     <button class="tab" role="tab" id="tab-RO" data-country="RO" aria-controls="panel-RO" aria-selected="false" tabindex="-1">
       🇷🇴 Romania <span class="code">CNP · IBAN</span>
+    </button>
+    <button class="tab" role="tab" id="tab-PT" data-country="PT" aria-controls="panel-PT" aria-selected="false" tabindex="-1">
+      🇵🇹 Portugal <span class="code">CC · NISS · IBAN</span>
     </button>
     <button class="tab" role="tab" id="tab-CO" data-country="CO" aria-controls="panel-CO" aria-selected="false" tabindex="-1">
       🇨🇴 Colombia <span class="code">Cédula / NIT · Cuenta</span>
@@ -680,6 +683,182 @@
       </div>
     </section>
 
+    <!-- ========================================================= Portugal -->
+    <section class="panel" id="panel-PT" role="tabpanel" aria-labelledby="tab-PT" data-country="PT" hidden>
+      <div class="switcher" role="tablist" aria-label="Portugal document type">
+        <button class="sw" role="tab" data-doc="id" data-aliases="cc cartao" aria-controls="doc-PT-id" aria-selected="true">Cartão de Cidadão</button>
+        <button class="sw" role="tab" data-doc="niss" data-aliases="ss" aria-controls="doc-PT-niss" aria-selected="false">NISS</button>
+        <button class="sw" role="tab" data-doc="bank" data-aliases="iban nib" aria-controls="doc-PT-bank" aria-selected="false">IBAN</button>
+      </div>
+
+      <div class="doc" id="doc-PT-id" data-doc="id">
+        <div class="card">
+          <h2>Portugal — N.º Documento de Identificação (Cartão de Cidadão)</h2>
+          <p class="hint">Civil ID number with its check digit, the card version and the final check digit, per the autenticacao.gov rule.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="PT-id-version">Card version</label>
+              <select id="PT-id-version" data-field="version">
+                <option value="random">Random (ZZ / ZY / ZX)</option>
+                <option value="ZZ">ZZ — first card</option>
+                <option value="ZY">ZY</option>
+                <option value="ZX">ZX</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="PT-id-format">Formatting</label>
+              <select id="PT-id-format" data-field="format">
+                <option value="spaced">Spaced — 00000000 0 ZZ4</option>
+                <option value="plain">Plain — 000000000ZZ4</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="PT-id-count">How many</label>
+              <select id="PT-id-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate document number</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a Cartão de Cidadão number to check" aria-label="document number to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>D×8</dt><dd>Número de identificação civil</dd>
+            <dt>C</dt><dd>Civil ID check digit — weights 9…2, 11 − (sum mod 11); a result of 10 is printed as 0, so the generator never produces it</dd>
+            <dt>VV</dt><dd>Card version — ZZ on the first card, ZY, ZX… on replacements</dd>
+            <dt>K</dt><dd>Final check digit over the first 11 characters (A=10 … Z=35): from the right, every other value doubled (−9 if over 9), sum must reach a multiple of 10</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-PT-niss" data-doc="niss" hidden>
+        <div class="card">
+          <h2>Portugal — N.º Segurança Social (NISS)</h2>
+          <p class="hint">Every value passes the format and check-digit rule.</p>
+          <div class="fields">
+            <div class="field">
+              <label for="PT-niss-kind">Holder</label>
+              <select id="PT-niss-kind" data-field="kind">
+                <option value="random">Random</option>
+                <option value="person">1 — pessoa singular (individual)</option>
+                <option value="company">2 — pessoa coletiva (legal entity)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="PT-niss-count">How many</label>
+              <select id="PT-niss-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate NISS</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste a NISS to check" aria-label="NISS to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>1</dt><dd>1 = pessoa singular, 2 = pessoa coletiva (issued prefixes 10/11 and 20/21)</dd>
+            <dt>2–10</dt><dd>Serial number</dd>
+            <dt>11</dt><dd>Check digit — weights 29,23,19,17,13,11,7,5,3,2 over digits 1–10, then 9 − (sum mod 10)</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="doc" id="doc-PT-bank" data-doc="bank" hidden>
+        <div class="card">
+          <h2>Portugal — IBAN / NIB</h2>
+          <p class="hint">Includes the two national NIB control digits plus the mod-97 IBAN check (always 50 for PT).</p>
+          <div class="fields">
+            <div class="field">
+              <label for="PT-bank-bank">Bank (banco)</label>
+              <select id="PT-bank-bank" data-field="bank" data-options="banks"></select>
+            </div>
+            <div class="field">
+              <label for="PT-bank-format">Formatting</label>
+              <select id="PT-bank-format" data-field="format">
+                <option value="plain">Plain — PT50000201231…</option>
+                <option value="grouped">Grouped — PT50 0002 0123 …</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="PT-bank-count">How many</label>
+              <select id="PT-bank-count" data-role="count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn primary" data-action="generate">Generate</button>
+            <button class="btn" data-action="copy-all" hidden>Copy all</button>
+          </div>
+          <ul class="results" data-role="results"></ul>
+        </div>
+
+        <div class="card">
+          <h2>Validate IBAN</h2>
+          <p class="hint">Paste a number to verify its structure and checksum.</p>
+          <div class="validator-row">
+            <input type="text" data-role="validate" placeholder="Paste an IBAN to check" aria-label="IBAN to validate">
+            <button class="btn" data-action="check">Check</button>
+          </div>
+          <div class="verdict" data-role="verdict"></div>
+        </div>
+
+        <div class="card spec">
+          <h2>Structure</h2>
+          <dl>
+            <dt>PT kk</dt><dd>Country code + mod-97 IBAN check digits — always 50, because the NIB already makes the BBAN ≡ 1 mod 97</dd>
+            <dt>BBBB</dt><dd>Banco — 4-digit bank code</dd>
+            <dt>SSSS</dt><dd>Balcão — 4-digit branch code</dd>
+            <dt>C×11</dt><dd>11-digit account number</dd>
+            <dt>DD</dt><dd>NIB control digits: 98 − (first 19 digits × 100) mod 97</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+
     <!-- ========================================================= Colombia -->
     <section class="panel" id="panel-CO" role="tabpanel" aria-labelledby="tab-CO" data-country="CO" hidden>
       <div class="switcher" role="tablist" aria-label="Colombia document type">
@@ -835,6 +1014,7 @@
   <script src="assets/countries/mx.js"></script>
   <script src="assets/countries/pl.js"></script>
   <script src="assets/countries/ro.js"></script>
+  <script src="assets/countries/pt.js"></script>
   <script src="assets/countries/co.js"></script>
   <script src="assets/app.js"></script>
 </body>
